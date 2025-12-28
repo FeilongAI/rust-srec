@@ -43,6 +43,8 @@ docker compose version
 
 ## 快速启动（使用预构建镜像）
 
+> **重要提示**: 本指南将下载路径配置为 `/root/downloads`。所有通过应用下载的流媒体文件将保存在该目录中。
+
 ### 1. 进入项目目录
 
 ```bash
@@ -72,7 +74,7 @@ FRONTEND_PORT=80
 # 数据目录
 DATA_DIR=./data
 CONFIG_DIR=./config
-OUTPUT_DIR=./output
+OUTPUT_DIR=/root/downloads
 
 # 数据库配置
 DATABASE_URL=sqlite:///app/data/rust-srec.db
@@ -105,7 +107,12 @@ BACKEND_URL=http://rust-srec:8080
 ### 3. 创建必要的目录
 
 ```bash
-mkdir -p data config output
+# 创建数据和配置目录
+mkdir -p data config
+
+# 创建下载目录（需要 root 权限）
+sudo mkdir -p /root/downloads
+sudo chmod 755 /root/downloads
 ```
 
 ### 4. 启动服务
@@ -126,6 +133,7 @@ docker compose ps
 - **前端界面**: http://localhost:80
 - **后端 API**: http://localhost:8080
 - **健康检查**: http://localhost:8080/api/health/ready
+- **下载文件位置**: /root/downloads （主机）→ /app/output （容器内）
 
 ### 6. 管理服务
 
@@ -216,7 +224,7 @@ docker run -d \
   --name rust-srec \
   -p 8080:8080 \
   -v $(pwd)/data:/app/data \
-  -v $(pwd)/output:/app/output \
+  -v /root/downloads:/app/output \
   -e JWT_SECRET="your-secret-key-at-least-32-characters-long" \
   -e DATABASE_URL="sqlite:///app/data/rust-srec.db" \
   -e RUST_LOG=info \
@@ -256,10 +264,16 @@ FRONTEND_PORT=8000
 
 ```bash
 # 更改数据目录所有者
-sudo chown -R $USER:$USER data output config
+sudo chown -R $USER:$USER data config
 
 # 或者设置适当的权限
-chmod -R 755 data output config
+chmod -R 755 data config
+
+# 下载目录权限（/root/downloads 需要 root 权限）
+sudo chmod -R 755 /root/downloads
+# 如果需要让普通用户也能访问
+sudo chown -R root:$USER /root/downloads
+sudo chmod -R 775 /root/downloads
 ```
 
 ### 3. 数据库初始化
